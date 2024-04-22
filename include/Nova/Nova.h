@@ -1,8 +1,6 @@
 #pragma once
 #include <string>
 
-#define NOVA_ENABLED
-
 #ifdef NOVA_ENABLED
 
 #ifdef _WIN32
@@ -133,6 +131,10 @@ namespace Nova
 			logThread.join();
 		}
 	};
+
+	inline std::thread Logger::logThread;
+	inline bool Logger::isActive = false;
+	inline std::queue<std::string> Logger::messages;
 }
 
 #endif
