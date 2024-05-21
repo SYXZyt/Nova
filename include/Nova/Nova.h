@@ -1,15 +1,21 @@
 #pragma once
 #include <string>
 
+#define NOVA_ENABLED
 #ifdef NOVA_ENABLED
 
 #ifdef _WIN32
 #include <Windows.h>
 #endif
 
+#include <ctime>
+#include <cassert>
 #include <queue>
 #include <thread>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
 
 namespace Nova
 {
@@ -20,10 +26,13 @@ namespace Nova
 		static std::thread logThread;
 
 		/// @brief Is the thread currently running or not
-		static bool isActive;
+		static volatile bool isActive;
 
 		/// @brief Where to store messages which have not yet been logged
 		static std::queue<std::string> messages;
+
+		/// @brief The file stream to output messages
+		static std::ofstream* out;
 
 		/// @brief Get a message from the queue and then log it to the console
 		static void LogMessage()
@@ -40,6 +49,12 @@ namespace Nova
 			OutputDebugStringA(message.c_str());
 			OutputDebugStringA("\r\n");
 #endif
+
+			if (out)
+			{
+				(*out) << message << '\n';
+				out->flush();
+			}
 		}
 
 		/// @brief The main loop which the logger uses. Should run on a thread otherwise it will block the entire application
@@ -104,7 +119,7 @@ namespace Nova
 		}
 
 		/// @brief Initalises the logger. Should be called at the beginning of main
-		static void Begin()
+		static void Begin(bool logToFile = false)
 		{
 			//If the logger has already begun, we can log an error message
 			if (isActive)
@@ -112,6 +127,20 @@ namespace Nova
 				LogError("Nova has already been started");
 				return;
 			}
+
+			std::time_t now = std::time(nullptr);
+			std::tm* now_tm = std::localtime(&now);
+
+			std::stringstream ss;
+			ss << "Nova "
+				<< (now_tm->tm_year + 1900) << '-'
+				<< std::setw(2) << std::setfill('0') << (now_tm->tm_mon + 1) << '-'
+				<< std::setw(2) << std::setfill('0') << now_tm->tm_mday << ' '
+				<< std::setw(2) << std::setfill('0') << now_tm->tm_hour << '-'
+				<< std::setw(2) << std::setfill('0') << now_tm->tm_min << '-'
+				<< std::setw(2) << std::setfill('0') << now_tm->tm_sec;
+
+			out = new std::ofstream(ss.str());
 
 			isActive = true;
 			logThread = std::thread(Logger::LogLoop);
@@ -123,18 +152,23 @@ namespace Nova
 		{
 			//Ideally we would log an error here, but nova is not active so we can't. I don't like the idea of throwing over this
 			//It isn't a fatal error so we don't need to throw. Suppose we could do a debug assert
-			if (!isActive)
-				return;
+			assert(isActive || "Nova has already ended. Forgot call to Nova::Begin()?");
 
 			Log("Nova has ended");
 			isActive = false;
 			logThread.join();
+
+			out->close();
+
+			delete out;
+			out = nullptr;
 		}
 	};
 
 	inline std::thread Logger::logThread;
-	inline bool Logger::isActive = false;
+	inline volatile bool Logger::isActive = false;
 	inline std::queue<std::string> Logger::messages;
+	inline std::ofstream* Logger::out = nullptr;
 }
 
 #endif
