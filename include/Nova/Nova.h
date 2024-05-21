@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 
-#define NOVA_ENABLED
 #ifdef NOVA_ENABLED
 
 #ifdef _WIN32
@@ -138,7 +137,7 @@ namespace Nova
 				<< std::setw(2) << std::setfill('0') << now_tm->tm_mday << ' '
 				<< std::setw(2) << std::setfill('0') << now_tm->tm_hour << '-'
 				<< std::setw(2) << std::setfill('0') << now_tm->tm_min << '-'
-				<< std::setw(2) << std::setfill('0') << now_tm->tm_sec;
+				<< std::setw(2) << std::setfill('0') << now_tm->tm_sec << ".txt";
 
 			out = new std::ofstream(ss.str());
 
@@ -176,10 +175,10 @@ namespace Nova
 namespace Nova
 {
 	/// @brief Initalises the logger. Should be called at the beginning of main
-	inline static void Begin()
+	inline static void Begin(bool useFile = false)
 	{
 #ifdef NOVA_ENABLED
-		Logger::Begin();
+		Logger::Begin(useFile);
 #endif
 	}
 
