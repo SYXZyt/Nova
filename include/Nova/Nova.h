@@ -150,15 +150,14 @@ namespace Nova
 		/// @brief Shuts down the logger. Should be called at the end of main
 		static void End()
 		{
-			//Ideally we would log an error here, but nova is not active so we can't. I don't like the idea of throwing over this
-			//It isn't a fatal error so we don't need to throw. Suppose we could do a debug assert
 			assert(isActive || "Nova has already ended. Forgot call to Nova::Begin()?");
 
 			Log("Nova has ended");
 			isActive = false;
 			logThread.join();
 
-			out->close();
+			if (out)
+				out->close();
 
 			delete out;
 			out = nullptr;
