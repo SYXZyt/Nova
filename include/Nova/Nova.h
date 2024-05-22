@@ -139,7 +139,8 @@ namespace Nova
 				<< std::setw(2) << std::setfill('0') << now_tm->tm_min << '-'
 				<< std::setw(2) << std::setfill('0') << now_tm->tm_sec << ".txt";
 
-			out = new std::ofstream(ss.str());
+			if (logToFile)
+				out = new std::ofstream(ss.str());
 
 			isActive = true;
 			logThread = std::thread(Logger::LogLoop);
